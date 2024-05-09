@@ -1,3 +1,5 @@
 pytube
 ffmpeg-python
 SpeechRecognition
+pydub
+soundfile
