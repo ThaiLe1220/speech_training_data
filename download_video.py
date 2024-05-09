@@ -3,7 +3,7 @@ import ffmpeg
 import os
 
 # URL of the YouTube video
-url = "https://www.youtube.com/shorts/kthhmFitRWA"
+url = "https://www.youtube.com/shorts/3924Sw03-mU"
 
 # Create a YouTube object with the URL
 yt = YouTube(url)
