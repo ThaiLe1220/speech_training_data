@@ -35,13 +35,13 @@ def check_tts_status(api_key, request_id, input_text_length):
     headers = {"Authorization": f"Bearer {api_key}"}
 
     # Calculate initial wait time based on the number of characters in the input text
-    initial_wait_time = input_text_length * 0.025
+    initial_wait_time = input_text_length * 0.01
     print(
         f"Waiting {initial_wait_time} seconds before starting to poll for TTS status."
     )
     time.sleep(initial_wait_time)  # Initial delay before starting the polling
 
-    for _ in range(20):  # Maximum number of retries
+    for _ in range(10):  # Maximum number of retries
         time.sleep(1)  # Wait for 1 second before each check
         response = requests.get(get_url, headers=headers, timeout=10)
         response_data = response.json()

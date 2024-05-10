@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from utils_vbee import (
     load_api_key,
@@ -8,12 +9,46 @@ from utils_vbee import (
 )
 
 
+def get_voice_tag(voice_code):
+    parts = voice_code.split("_")
+    # Extract the city abbreviation and gender
+    city = parts[0].split("-")[0]
+    gender = "m" if "male" in parts[1] else "f"
+    # Combine them into the desired tag format
+    voice_tag = f"{city}_{gender}"
+    return voice_tag
+
+
+def process_text(input_text, index, voice_codes, api_key):
+    voice_code = voice_codes[index % len(voice_codes)]
+    voice_tag = get_voice_tag(voice_code)
+    speed_rate = 1.0
+
+    print(f"Processing {index + 1}: {input_text}")
+    response_data = send_tts_request(api_key, input_text, voice_code, speed_rate)
+
+    if "result" in response_data and "request_id" in response_data["result"]:
+        request_id = response_data["result"]["request_id"]
+        try:
+            audio_url = check_tts_status(api_key, request_id, len(input_text))
+            local_audio_path = (
+                f"vbee/universal/audio_{index + 1}_{voice_tag}_{len(input_text)}.wav"
+            )
+            download_audio_file(audio_url, local_audio_path)
+            print(f"Audio file saved: {local_audio_path}")
+        except Exception as e:
+            print(f"Failed to process text {index + 1}: {e}")
+    else:
+        print(
+            f"Request ID not found for text {index + 1}. Here's the POST response: {response_data}"
+        )
+
+
 def main():
     api_key = load_api_key()
-    # print("API Key:", api_key)
 
     voice_codes = [
-        "hn_female_ngochuyen_fast_news_48k-thg",
+        "hn_female_ngochuyen_full_48k-fhg",
         "hn_male_phuthang_news65dt_44k-fhg",
         "hn_male_manhdung_news_48k-fhg",
         "hn_male_thanhlong_talk_48k-fhg",
@@ -27,34 +62,23 @@ def main():
         "hue_female_huonggiang_full_48k-fhg",
     ]
 
-    with open("random_vietnamese_texts_1000.txt", "r", encoding="utf-8") as file:
-        input_texts = file.readlines()
+    with open("src/vi_universal_2m.txt", "r", encoding="utf-8") as file:
+        input_texts = [line.strip() for line in file.readlines() if line.strip()]
 
-    # Loop through each text, send request, check status, and save audio
-    for index, input_text in enumerate(input_texts):
-        input_text = input_text.strip()
-        if not input_text:
-            continue
+    # Adjust the range to start from index 205
+    start_index = 2747
+    input_texts_subset = input_texts[start_index:]
 
-        voice_code = voice_codes[index % len(voice_codes)]
-        speed_rate = 1.0
+    # Using ThreadPoolExecutor to manage multiple threads
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        futures = [
+            executor.submit(process_text, text, idx + start_index, voice_codes, api_key)
+            for idx, text in enumerate(input_texts_subset)
+        ]
 
-        print(f"Processing {index + 1}/{len(input_texts)}: {input_text}")
-        response_data = send_tts_request(api_key, input_text, voice_code, speed_rate)
-
-        if "result" in response_data and "request_id" in response_data["result"]:
-            request_id = response_data["result"]["request_id"]
-            try:
-                audio_url = check_tts_status(api_key, request_id, len(input_text))
-                local_audio_path = f"vbee/universal/audio{index + 1}.wav"
-                download_audio_file(audio_url, local_audio_path)
-                print(f"Audio file saved: {local_audio_path}")
-            except Exception as e:
-                print(f"Failed to process text {index + 1}: {e}")
-        else:
-            print(
-                f"Request ID not found for text {index + 1}. Here's the POST response: {response_data}"
-            )
+        # Wait for all futures to complete
+        for future in futures:
+            future.result()
 
 
 if __name__ == "__main__":

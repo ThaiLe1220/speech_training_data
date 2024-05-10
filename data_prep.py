@@ -2,6 +2,7 @@ from datasets import load_dataset
 import nltk
 from nltk.tokenize import word_tokenize
 import random
+import re
 
 # Ensure you have the NLTK tokenizer resources
 nltk.download("punkt")
@@ -22,23 +23,86 @@ def count_unique_words(file_path):
     return len(unique_tokens), unique_tokens
 
 
-def generate_random_text(input_path, output_path, max_chars=1000):
+def clean_line(line):
+    # Remove special characters
+    special_chars = '()"-_'
+    for char in special_chars:
+        line = line.replace(char, "")
+
+    # Fix spacing around commas
+    line = line.replace(" ,", ",")
+    line = line.replace("  ", " ")
+    line = line.replace(";", ",")
+    line = line.replace("…", ".")
+    line = line.replace("...", ".")
+
+    # Trim periods from the beginning or the end of the line and excess spaces
+    line = line.strip(",. ;")
+
+    # Ensure the line does not exceed 200 characters
+    return line[:200]
+
+
+def generate_random_text(input_path, output_path, max_chars=2000000):
     # Read all lines from the file
     with open(input_path, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
-    # Remove any newline characters from the lines
-    lines = [line.strip() for line in lines if line.strip()]
+    # Define a regular expression pattern for Vietnamese text and specific punctuation
+    pattern = re.compile(
+        r'^[a-zA-Zàáảãạăắằẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s,\.?!;%"…()_-]+$'
+    )
 
-    # Shuffle the lines to randomize the selection process
-    random.shuffle(lines)
+    # Filter lines based on character length and pattern
+    short_lines = [
+        line.strip()
+        for line in lines
+        if 18 <= len(line.strip()) <= 45 and pattern.match(line)
+    ]
+    medium_lines = [
+        line.strip()
+        for line in lines
+        if 45 < len(line.strip()) <= 145 and pattern.match(line)
+    ]
+    long_lines = [
+        line.strip()
+        for line in lines
+        if 145 < len(line.strip()) <= 180 and pattern.match(line)
+    ]
 
-    # Concatenate lines until the maximum number of characters is reached
+    # Adjust the proportions
+    random.shuffle(medium_lines)
+    random.shuffle(short_lines)
+    random.shuffle(long_lines)
+
+    # Determine the total number of lines desired, assuming a maximum number available
+    total_available_lines = len(medium_lines) + len(short_lines) + len(long_lines)
+    target_proportion = 0.7
+
+    # Calculate numbers for target and other lines to achieve the desired proportion
+    num_target = int(total_available_lines * target_proportion)
+    num_other = total_available_lines - num_target  # Remaining lines
+
+    # Ensure we don't request more target lines than available
+    num_target = min(num_target, len(medium_lines))
+    num_other = min(num_other, len(short_lines) + len(long_lines))
+
+    # Assemble the final list of lines
+    total_lines = medium_lines[:num_target] + random.sample(
+        short_lines + long_lines, num_other
+    )
+
+    # Shuffle the combined list to randomize the selection process
+    random.shuffle(total_lines)
+
+    # Initialize output text and process the shuffled lines
     output_text = ""
-    for line in lines:
-        if len(output_text) + len(line) > max_chars:
-            break
-        output_text += line + "\n"  # Add the line and a newline character
+    for line in total_lines:
+        clean_and_trimmed_line = clean_line(line)
+        if clean_and_trimmed_line:
+            if len(output_text) + len(clean_and_trimmed_line) > max_chars:
+                break
+            output_text += clean_and_trimmed_line + "\n"
 
     # Write the output text to a new file
     with open(output_path, "w", encoding="utf-8") as output_file:
@@ -57,7 +121,10 @@ def main():
     # print(f"Total unique words: {unique_word_count}")  # 800k unique words
 
     # Call the function to generate the file
-    generate_random_text("all_vietnamese_texts.txt", "random_vietnamese_texts_1000.txt")
+    # generate_random_text("all_vietnamese_texts.txt", "src/vi_universal_2m.txt")
+
+    unique_word_count, unique_words = count_unique_words("src/vi_universal_2m.txt")
+    print(f"Total unique words: {unique_word_count}")  # 14k unique words
 
 
 if __name__ == "__main__":
