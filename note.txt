@@ -1,4 +1,5 @@
 macOS: brew install ffmpeg
-
-
 pip install -r requirements.txt 
+
+git rm split
+git commit -m "Remove split"

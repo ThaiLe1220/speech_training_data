@@ -3,3 +3,4 @@ ffmpeg-python
 SpeechRecognition
 pydub
 soundfile
+python-dotenv
