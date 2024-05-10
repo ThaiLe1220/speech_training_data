@@ -4,3 +4,6 @@ SpeechRecognition
 pydub
 soundfile
 python-dotenv
+datasets
+nltk
+
