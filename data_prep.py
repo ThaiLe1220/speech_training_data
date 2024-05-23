@@ -43,31 +43,35 @@ def clean_line(line):
     return line[:200]
 
 
-def generate_random_text(input_path, output_path, max_chars=2000000):
-    # Read all lines from the file
-    with open(input_path, "r", encoding="utf-8") as file:
-        lines = file.readlines()
+def generate_random_text(input_path1, input_path2, output_path, max_chars=1000000):
+    # Read all lines from the first file
+    with open(input_path1, "r", encoding="utf-8") as file:
+        lines1 = file.readlines()
+
+    # Read all lines from the second file
+    with open(input_path2, "r", encoding="utf-8") as file:
+        lines2 = set(file.readlines())
 
     # Define a regular expression pattern for Vietnamese text and specific punctuation
     pattern = re.compile(
         r'^[a-zA-Zàáảãạăắằẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s,\.?!;%"…()_-]+$'
     )
 
-    # Filter lines based on character length and pattern
+    # Filter lines based on character length, pattern, and non-appearance in input_path2
     short_lines = [
         line.strip()
-        for line in lines
-        if 18 <= len(line.strip()) <= 45 and pattern.match(line)
+        for line in lines1
+        if 18 <= len(line.strip()) <= 45 and pattern.match(line) and line not in lines2
     ]
     medium_lines = [
         line.strip()
-        for line in lines
-        if 45 < len(line.strip()) <= 145 and pattern.match(line)
+        for line in lines1
+        if 45 < len(line.strip()) <= 145 and pattern.match(line) and line not in lines2
     ]
     long_lines = [
         line.strip()
-        for line in lines
-        if 145 < len(line.strip()) <= 180 and pattern.match(line)
+        for line in lines1
+        if 145 < len(line.strip()) <= 180 and pattern.match(line) and line not in lines2
     ]
 
     # Adjust the proportions
@@ -121,9 +125,13 @@ def main():
     # print(f"Total unique words: {unique_word_count}")  # 800k unique words
 
     # Call the function to generate the file
-    # generate_random_text("all_vietnamese_texts.txt", "src/vi_universal_2m.txt")
+    generate_random_text(
+        "src/all_vietnamese_texts.txt",
+        "src/vi_universal_2m.txt",
+        "src/vi_universal_1m_plus.txt",
+    )
 
-    unique_word_count, unique_words = count_unique_words("src/vi_universal_2m.txt")
+    unique_word_count, unique_words = count_unique_words("src/vi_universal_1m_plus.txt")
     print(f"Total unique words: {unique_word_count}")  # 14k unique words
 
 

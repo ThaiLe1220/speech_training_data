@@ -13,7 +13,7 @@ def get_voice_tag(voice_code):
     parts = voice_code.split("_")
     # Extract the city abbreviation and gender
     city = parts[0].split("-")[0]
-    gender = "m" if "male" in parts[1] else "f"
+    gender = "f" if "female" in parts[1] else "m"
     # Combine them into the desired tag format
     voice_tag = f"{city}_{gender}"
     return voice_tag
@@ -32,7 +32,7 @@ def process_text(input_text, index, voice_codes, api_key):
         try:
             audio_url = check_tts_status(api_key, request_id, len(input_text))
             local_audio_path = (
-                f"vbee/universal/audio_{index + 1}_{voice_tag}_{len(input_text)}.wav"
+                f"wavs/universal3/audio_{index + 1}_{voice_tag}_{len(input_text)}.wav"
             )
             download_audio_file(audio_url, local_audio_path)
             print(f"Audio file saved: {local_audio_path}")
@@ -62,11 +62,11 @@ def main():
         "hue_female_huonggiang_full_48k-fhg",
     ]
 
-    with open("src/vi_universal_2m.txt", "r", encoding="utf-8") as file:
+    with open("src/vi_universal_3.txt", "r", encoding="utf-8") as file:
         input_texts = [line.strip() for line in file.readlines() if line.strip()]
 
     # Adjust the range to start from index 205
-    start_index = 2747
+    start_index = 0
     input_texts_subset = input_texts[start_index:]
 
     # Using ThreadPoolExecutor to manage multiple threads
