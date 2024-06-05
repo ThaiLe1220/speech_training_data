@@ -1,4 +1,4 @@
-""" Filename: main.py - Directory: ./ """
+""" Filename: youtube_generator.py - Directory: ./ """
 
 from pytube import YouTube
 import ffmpeg

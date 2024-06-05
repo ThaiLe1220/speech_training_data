@@ -6,4 +6,4 @@ soundfile
 python-dotenv
 datasets
 nltk
-
+yt-dlp
